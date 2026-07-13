@@ -363,8 +363,39 @@ function renderBSingle(q){
 }
 function renderBMulti(q){
   var cl=q.answer_labels,h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
-  for(var o of q.options) h+='<div class="opt-item" data-c="'+cl.includes(o.label)+'" onclick="bPickMulti(this,\'+o.label+\',\'+q.answer_labels.join(\'、\')+\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
+  for(var o of q.options){
+    var ck=cl.includes(o.label)?'true':'false';
+    h+='<div class="opt-item" data-c="'+ck+'" onclick="bPickMulti(this)"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
+  }
   h+='<div class="result-badge" id="br-'+q.num+'"></div></div></div>';return h;
+}
+function bPickMulti(el){
+  el.classList.toggle('selected');var p=el.parentElement,items=p.querySelectorAll('.opt-item'),b=p.querySelector('.result-badge');
+  items.forEach(function(i){i.classList.remove('multi-correct','multi-wrong','multi-missed');});
+  var btn=p.querySelector('.btn-multi-submit');
+  var hasSelected=Array.from(items).some(function(i){return i.classList.contains('selected');});
+  if(hasSelected){
+    if(!btn){
+      btn=document.createElement('button');btn.className='btn-multi-submit';btn.textContent='确认选择';p.appendChild(btn);
+      btn.onclick=function(){
+        var cl=[],allCorrect=true,hasWrong=false;
+        items.forEach(function(i){
+          var sel=i.classList.contains('selected');
+          var cor=i.dataset.c==='true';
+          if(cor){cl.push(i.querySelector('.opt-label').textContent.trim());}
+          if(sel&&cor){i.classList.add('multi-correct');}
+          else if(sel&&!cor){i.classList.add('multi-wrong');hasWrong=true;}
+          else if(!sel&&cor){i.classList.add('multi-missed');allCorrect=false;}
+        });
+        var isCorrect=allCorrect&&!hasWrong;
+        b.className='result-badge show '+(isCorrect?'correct':'wrong');
+        b.innerHTML=isCorrect?'&#10003; 全部正确！':'&#10007; 参考答案：'+esc(cl.join('、'));
+        btn.style.display='none';
+      };
+    }
+  }else{
+    b.className='result-badge';if(btn){p.removeChild(btn);}
+  }
 }function renderBJudge(q){
   var a=q.answer_labels[0],h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
   for(var o of q.options) h+='<div class="opt-item" data-c="'+(o.text===a)+'" onclick="bPick(this,\''+o.text+'\',\''+a+'\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
