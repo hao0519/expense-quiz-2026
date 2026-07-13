@@ -379,18 +379,28 @@ function bPick(el,sel,cor){
 }
 function bPickMulti(el,sel,ansStr){
   el.classList.toggle('selected');var p=el.parentElement,items=p.querySelectorAll('.opt-item'),b=p.querySelector('.result-badge');
-  var selL=[];items.forEach(function(i){if(i.classList.contains('selected'))selL.push(i.querySelector('.opt-label').textContent.trim());});
-  var corL=ansStr.split(/[、,，]/).map(function(s){return s.trim();});
   items.forEach(function(i){i.classList.remove('multi-correct','multi-wrong','multi-missed');});
-  items.forEach(function(i){var lb=i.querySelector('.opt-label').textContent.trim();
-    if(corL.includes(lb)&&selL.includes(lb))i.classList.add('multi-correct');
-    else if(!corL.includes(lb)&&selL.includes(lb))i.classList.add('multi-wrong');
-    else if(corL.includes(lb)&&!selL.includes(lb))i.classList.add('multi-missed');});
   var btn=p.querySelector('.btn-multi-submit');
-  if(selL.length>0){if(!btn){btn=document.createElement('button');btn.className='btn-multi-submit';btn.textContent='确认选择';p.appendChild(btn);
-    btn.onclick=function(){b.className='result-badge show '+(corL.every(function(l){return selL.includes(l);})&&selL.every(function(l){return corL.includes(l);})?'correct':'wrong');
-    b.innerHTML=corL.every(function(l){return selL.includes(l);})&&selL.every(function(l){return corL.includes(l);})?'&#10003; 全部正确！':'&#10007; 参考答案：'+esc(ansStr.replace(/[、,，]/g,'、'));btn.style.display='none';};}
-  }else{b.className='result-badge';if(btn){p.removeChild(btn);}}
+  var selL=[];items.forEach(function(i){if(i.classList.contains('selected'))selL.push(i.querySelector('.opt-label').textContent.trim());});
+  if(selL.length>0){
+    if(!btn){
+      btn=document.createElement('button');btn.className='btn-multi-submit';btn.textContent='确认选择';p.appendChild(btn);
+      btn.onclick=function(){
+        var s2=[];items.forEach(function(i){if(i.classList.contains('selected'))s2.push(i.querySelector('.opt-label').textContent.trim());});
+        var corL=ansStr.split(/[、,，]/).map(function(s){return s.trim();});
+        items.forEach(function(i){i.classList.remove('multi-correct','multi-wrong','multi-missed');});
+        items.forEach(function(i){var lb=i.querySelector('.opt-label').textContent.trim();
+          if(corL.includes(lb)&&s2.includes(lb))i.classList.add('multi-correct');
+          else if(!corL.includes(lb)&&s2.includes(lb))i.classList.add('multi-wrong');
+          else if(corL.includes(lb)&&!s2.includes(lb))i.classList.add('multi-missed');});
+        b.className='result-badge show '+(corL.every(function(l){return s2.includes(l);})&&s2.every(function(l){return corL.includes(l);})?'correct':'wrong');
+        b.innerHTML=corL.every(function(l){return s2.includes(l);})&&s2.every(function(l){return corL.includes(l);})?'&#10003; 全部正确！':'&#10007; 参考答案：'+esc(ansStr.replace(/[、,，]/g,'、'));
+        btn.style.display='none';
+      };
+    }
+  }else{
+    b.className='result-badge';if(btn){p.removeChild(btn);}
+  }
 }
 function buildBrowse(){
   var h='';for(var q of SINGLES)h+=renderBSingle(q);document.getElementById('browse-single').innerHTML=h;
