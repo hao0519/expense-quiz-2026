@@ -289,6 +289,7 @@ body {
 .exam-nav .btn-next { background: #1a73e8; color: #fff; }
 .exam-nav button:disabled { opacity: 0.4; }
 .exam-nav button:active { transform: scale(0.97); }
+.btn-multi-submit{display:block;margin:10px auto 0;padding:8px 24px;background:#1a73e8;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer;}.btn-multi-submit:hover{background:#1557b0;}
 </style>
 </head>
 <body>
@@ -385,10 +386,11 @@ function bPickMulti(el,sel,ansStr){
     if(corL.includes(lb)&&selL.includes(lb))i.classList.add('multi-correct');
     else if(!corL.includes(lb)&&selL.includes(lb))i.classList.add('multi-wrong');
     else if(corL.includes(lb)&&!selL.includes(lb))i.classList.add('multi-missed');});
-  if(selL.length===0){b.className='result-badge';return;}
-  var ok=corL.every(function(l){return selL.includes(l);})&&selL.every(function(l){return corL.includes(l);});
-  b.className='result-badge show '+(ok?'correct':'wrong');
-  b.innerHTML=ok?'&#10003; 全部正确！':'&#10007; 参考答案：'+esc(ansStr.replace(/[、,，]/g,'、'));
+  var btn=p.querySelector('.btn-multi-submit');
+  if(selL.length>0){if(!btn){btn=document.createElement('button');btn.className='btn-multi-submit';btn.textContent='确认选择';p.appendChild(btn);
+    btn.onclick=function(){b.className='result-badge show '+(corL.every(function(l){return selL.includes(l);})&&selL.every(function(l){return corL.includes(l);})?'correct':'wrong');
+    b.innerHTML=corL.every(function(l){return selL.includes(l);})&&selL.every(function(l){return corL.includes(l);})?'&#10003; 全部正确！':'&#10007; 参考答案：'+esc(ansStr.replace(/[、,，]/g,'、'));btn.style.display='none';};}
+  }else{b.className='result-badge';if(btn){p.removeChild(btn);}}
 }
 function buildBrowse(){
   var h='';for(var q of SINGLES)h+=renderBSingle(q);document.getElementById('browse-single').innerHTML=h;
