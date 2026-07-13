@@ -363,10 +363,9 @@ function renderBSingle(q){
 }
 function renderBMulti(q){
   var cl=q.answer_labels,h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
-  for(var o of q.options) h+='<div class="opt-item" data-c="'+cl.includes(o.label)+'" onclick="bPickMulti(this,\''+o.label+'\',\''+q.answer+'\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
+  for(var o of q.options) h+='<div class="opt-item" data-c="'+cl.includes(o.label)+'" onclick="bPickMulti(this,\'+o.label+\',\'+q.answer_labels.join(\'、\')+\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
   h+='<div class="result-badge" id="br-'+q.num+'"></div></div></div>';return h;
-}
-function renderBJudge(q){
+}function renderBJudge(q){
   var a=q.answer_labels[0],h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
   for(var o of q.options) h+='<div class="opt-item" data-c="'+(o.text===a)+'" onclick="bPick(this,\''+o.text+'\',\''+a+'\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
   h+='<div class="result-badge" id="br-'+q.num+'"></div></div></div>';return h;
