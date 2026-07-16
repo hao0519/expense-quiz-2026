@@ -27,6 +27,29 @@ body {
 }
 .header h1 { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .header p { font-size: 11px; opacity: 0.85; }
+/* Search bar */
+.search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+.search-bar input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E") 12px center no-repeat;
+  background-size: 18px;
+  text-indent: 26px;
+}
+.search-bar input:focus {
+  border-color: #1a73e8;
+}
 .mode-bar {
   display: flex;
   background: #fff;
@@ -299,7 +322,7 @@ body {
 
 <div class="header">
   <h1>2026年中期会费用考试 · 综合题库</h1>
-  <p>共711题 · 两种模式自由切换</p>
+  <p>共711题 · 两种模式自由切换 · 🔍 支持搜索</p>
 </div>
 
 <div class="mode-bar">
@@ -314,6 +337,7 @@ body {
     <button class="tab-btn" onclick="switchBrowseTab('multi')">多选题 <span class="count">111</span></button>
     <button class="tab-btn" onclick="switchBrowseTab('judge')">判断题 <span class="count">268</span></button>
   </div>
+  <div class="search-bar"><input type="text" id="search-input" placeholder="搜索题目关键词..." oninput="searchBrowse()"></div>
   <div id="browse-single" class="question-list active"></div>
   <div id="browse-multi" class="question-list"></div>
   <div id="browse-judge" class="question-list"></div>
@@ -415,6 +439,35 @@ function buildBrowse(){
   var h='';for(var q of SINGLES)h+=renderBSingle(q);document.getElementById('browse-single').innerHTML=h;
   h='';for(var q of MULTIS)h+=renderBMulti(q);document.getElementById('browse-multi').innerHTML=h;
   h='';for(var q of JUDGES)h+=renderBJudge(q);document.getElementById('browse-judge').innerHTML=h;
+  document.getElementById('search-input').disabled=false;
+}
+function searchBrowse(){
+  var kw=document.getElementById('search-input').value.trim().toLowerCase();
+  var ss=document.getElementById('browse-single'),ms=document.getElementById('browse-multi'),js=document.getElementById('browse-judge');
+  var sc=0,mc=0,jc=0;
+  ss.querySelectorAll('.q-card').forEach(function(c){
+    var m=!kw||c.textContent.toLowerCase().indexOf(kw)>=0;
+    c.style.display=m?'':'none';
+    if(m)sc++;
+  });
+  ms.querySelectorAll('.q-card').forEach(function(c){
+    var m=!kw||c.textContent.toLowerCase().indexOf(kw)>=0;
+    c.style.display=m?'':'none';
+    if(m)mc++;
+  });
+  js.querySelectorAll('.q-card').forEach(function(c){
+    var m=!kw||c.textContent.toLowerCase().indexOf(kw)>=0;
+    c.style.display=m?'':'none';
+    if(m)jc++;
+  });
+  var scTotal=SINGLES.length,mcTotal=MULTIS.length,jcTotal=JUDGES.length;
+  document.querySelector('#browse-page .tab-btn:nth-child(1) .count').textContent=sc;
+  document.querySelector('#browse-page .tab-btn:nth-child(2) .count').textContent=mc;
+  document.querySelector('#browse-page .tab-btn:nth-child(3) .count').textContent=jc;
+}
+function searchClear(){
+  document.getElementById('search-input').value='';
+  searchBrowse();
 }
 function switchBrowseTab(t){
   var map={single:0,multi:1,judge:2};
