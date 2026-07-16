@@ -291,6 +291,7 @@ body {
 .exam-nav button:disabled { opacity: 0.4; }
 .exam-nav button:active { transform: scale(0.97); }
 .btn-multi-submit{display:block;margin:10px auto 0;padding:8px 24px;background:#1a73e8;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer;}.btn-multi-submit:hover{background:#1557b0;}
+.section-badge{display:inline-block;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:600;margin-bottom:12px;}.section-badge.single{background:#e8f0fe;color:#1a73e8;}.section-badge.multi{background:#fce8e6;color:#d93025;}.section-badge.judge{background:#e6f4ea;color:#137333;}
 </style>
 </head>
 <body>
@@ -440,7 +441,7 @@ function startExam(){
   var ps=shuffle([].concat(SINGLES)).slice(0,20);
   var pm=shuffle([].concat(MULTIS)).slice(0,5);
   var pj=shuffle([].concat(JUDGES)).slice(0,20);
-  var all=shuffle(ps.concat(pm).concat(pj));
+  var all=ps.concat(pm).concat(pj);
   examQs=all.map(function(q,i){return Object.assign({},q,{examIdx:i+1});});
   examAs=examQs.map(function(){return{selected:[],submitted:false};});
   document.getElementById('exam-start').style.display='none';
@@ -454,7 +455,11 @@ function renderQ(idx){
   document.getElementById('current-index-show').textContent=idx+1;
   if(!q.options||q.options.length===0){document.getElementById('exam-question-area').innerHTML='<div class="q-card">数据错误：此题无选项</div>';return;}
   var isM=q.type==='多选题';
-  var h='<div class="q-card"><div class="q-text"><span class="q-number">'+(idx+1)+'</span><span class="text">'+esc(q.question)+'</span>';
+  var sec='';
+  if(idx<20)sec='<div class="section-badge single">📖 第一部分 · 单选题（1-20）</div>';
+  else if(idx<25)sec='<div class="section-badge multi">📖 第二部分 · 多选题（21-25）</div>';
+  else sec='<div class="section-badge judge">📖 第三部分 · 判断题（26-45）</div>';
+  var h='<div class="q-card">'+sec+'<div class="q-text"><span class="q-number">'+(idx+1)+'</span><span class="text">'+esc(q.question)+'</span>';
   if(a.submitted){var ok=isCor(idx);h+='<span class="answered-label '+(ok?'correct-label':'wrong-label')+'">'+(ok?'&#10003; 正确':'&#10007; 错误')+'</span>';}
   h+='</div><div class="options">';
   for(var o of q.options){
