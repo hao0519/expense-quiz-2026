@@ -292,6 +292,7 @@ body {
 .exam-nav button:active { transform: scale(0.97); }
 .btn-multi-submit{display:block;margin:10px auto 0;padding:8px 24px;background:#1a73e8;color:#fff;border:none;border-radius:20px;font-size:14px;cursor:pointer;}.btn-multi-submit:hover{background:#1557b0;}
 .section-badge{display:inline-block;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:600;margin-bottom:12px;}.section-badge.single{background:#e8f0fe;color:#1a73e8;}.section-badge.multi{background:#fce8e6;color:#d93025;}.section-badge.judge{background:#e6f4ea;color:#137333;}
+.lb-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}.lb-table th{background:#f0f4f8;padding:8px 4px;font-weight:600;position:sticky;top:0;}.lb-table td{padding:7px 4px;border-bottom:1px solid #f0f0f0;text-align:center;}.lb-table tr:nth-child(1) td{background:#fff8e0;font-weight:600;}.lb-table tr:nth-child(2) td{background:#f5f5f5;}.lb-table tr:nth-child(3) td{background:#fef4e8;}.lb-score{font-weight:700;color:#1a73e8;font-size:15px;}.lb-time{font-size:11px;color:#999;}.btn-leaderboard{display:inline-block;margin-top:8px;padding:8px 20px;background:linear-gradient(135deg,#f9a825,#f57c00);color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;text-decoration:none;}.btn-leaderboard:hover{opacity:.9;}.btn-clear-lb{display:inline-block;margin-top:8px;padding:6px 16px;background:#e0e0e0;color:#555;border:none;border-radius:16px;font-size:12px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -327,6 +328,7 @@ body {
       <p style="font-size:13px;color:#666;margin-bottom:4px;">随机抽45题：单选20 + 多选5 + 判断20</p>
       <p style="font-size:12px;color:#999;margin-bottom:20px;">做完自动计分，显示正确答案</p>
       <button class="btn-start" onclick="startExam()">开始考试</button>
+      <button class="btn-leaderboard" onclick="showLeaderboard()">🏆 成绩排行榜</button>
     </div>
   </div>
   <div id="exam-doing" style="display:none;">
@@ -533,6 +535,11 @@ function finishExam(){
   var total=examQs.length,correct=0;
   for(var i=0;i<total;i++)if(isCor(i))correct++;
   var score=Math.round(correct/total*100);
+  var sc0=0,mc0=0,jc0=0;
+  for(var i=0;i<examQs.length;i++){
+    if(examQs[i].type==='单选题')sc0++;else if(examQs[i].type==='多选题')mc0++;else jc0++;
+  }
+  saveScore(score,correct,total,sc0,mc0,jc0);
   var h='<div class="score-card"><h2 style="font-size:20px;margin-bottom:4px;">考试结束</h2>';
   h+='<div class="score-circle '+(score>=60?'pass':'fail')+'">'+score+'<span style="font-size:14px;">分</span></div>';
   h+='<div class="score-detail">答对 '+correct+' 题 / 共 '+total+' 题</div>';
@@ -552,6 +559,7 @@ function finishExam(){
   }
   h+='<div class="score-detail">单选 '+sc+'/'+st+' | 多选 '+mc+'/'+mt+' | 判断 '+jc+'/'+jt+'</div>';
   h+='<br><button class="btn-start" onclick="showRev()">查看答题详情</button>';
+  h+='<button class="btn-leaderboard" onclick="showLeaderboard()" style="margin-top:8px;">🏆 成绩排行榜</button>';
   h+='<button class="btn-restart" onclick="startExam()" style="margin-top:10px;background:linear-gradient(135deg,#1a73e8,#4285f4);">再来一套</button>';
   h+='<button class="btn-restart" onclick="switchMode(\'browse\')" style="margin-top:6px;background:#666;">返回刷题模式</button></div>';
   document.getElementById('exam-doing').style.display='none';
@@ -560,6 +568,37 @@ function finishExam(){
 }
 
 function showRev(){document.getElementById('exam-doing').style.display='block';document.getElementById('exam-result').style.display='none';renderQ(0);}
+
+// ======================== 排行榜 ========================
+function saveScore(sc,correct,total,sc0,mc0,jc0){
+  var lb=JSON.parse(localStorage.getItem('expenseQuizLB')||'[]');
+  var now=new Date();
+  var ts=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  lb.push({score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts,id:Date.now()});
+  lb.sort(function(a,b){return b.score-a.score||b.correct-a.correct;});
+  if(lb.length>100)lb=lb.slice(0,100);
+  localStorage.setItem('expenseQuizLB',JSON.stringify(lb));
+}
+function showLeaderboard(){
+  var lb=JSON.parse(localStorage.getItem('expenseQuizLB')||'[]');
+  if(lb.length===0){alert('暂无成绩记录，考完试自动排名！');return;}
+  var h='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2>';
+  h+='<table class="lb-table"><tr><th>#</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
+  for(var i=0;i<lb.length;i++){
+    var r=lb[i];
+    var medal='';
+    if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
+    var pct=Math.round(r.correct/r.total*100);
+    h+='<tr><td>'+medal+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
+  }
+  h+='</table>';
+  h+='<br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button>';
+  h+='<button class="btn-clear-lb" onclick="clearLeaderboard()">清除记录</button></div>';
+  document.getElementById('exam-start').style.display='none';
+  document.getElementById('exam-result').style.display='block';
+  document.getElementById('exam-result').innerHTML=h;
+}
+function clearLeaderboard(){if(confirm('确定清除全部成绩记录？')){localStorage.removeItem('expenseQuizLB');showLeaderboard();}}
 
 buildBrowse();
 </script>
