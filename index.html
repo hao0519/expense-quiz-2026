@@ -424,8 +424,8 @@ function bPickMulti(el){
     b.className='result-badge';if(btn){p.removeChild(btn);}
   }
 }function renderBJudge(q){
-  var a=q.answer,al=q.answer_labels[0],h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
-  for(var o of q.options) h+='<div class="opt-item" data-c="'+(o.label===al)+'" onclick="bPick(this,\''+o.text+'\',''+a+'\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
+  var a=q.answer_labels[0],h='<div class="q-card"><div class="q-text"><span class="q-number">'+q.num+'</span><span class="text">'+esc(q.question)+'</span></div><div class="options">';
+  for(var o of q.options) h+='<div class="opt-item" data-c="'+(o.label===a)+'" onclick="bPick(this,\''+o.text+'\',\''+q.answer+'\')"><span class="opt-label">'+o.label+'</span><span class="opt-text">'+esc(o.text)+'</span></div>';
   h+='<div class="result-badge" id="br-'+q.num+'"></div></div></div>';return h;
 }
 function bPick(el,sel,cor){
