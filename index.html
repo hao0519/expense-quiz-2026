@@ -599,7 +599,7 @@ function finishExam(){
   if(uname&&uname!='匿名用户')localStorage.setItem('expenseQuizName',uname);
   saveScore(pct,correct,total,sc0,mc0,jc0,uname);
   var h='<div class="score-card"><h2 style="font-size:20px;margin-bottom:4px;">考试结束</h2>';
-  h+='<div class="score-circle '+(pct>=60?'pass':'fail')+'"'+pct+'<span style="font-size:14px;">分</span></div>';
+  h+='<div class="score-circle '+(pct>=60?'pass':'fail')+'">'+pct+'<span style="font-size:14px;">分</span></div>';
   h+='<div class="score-detail">得分 '+score+' / '+totalScore+' 分（单选2分/题 · 多选4分/题 · 判断2分/题）</div>';
   var sc=0,mc=0,jc=0,st=0,mt=0,jt=0;
   for(var i=0;i<examQs.length;i++){
@@ -612,11 +612,12 @@ function finishExam(){
   h+='<br><button class="btn-start" onclick="showRev()">查看答题详情</button>';
   h+='<button class="btn-leaderboard" onclick="showLeaderboard()" style="margin-top:8px;">🏆 成绩排行榜</button>';
   h+='<button class="btn-restart" onclick="startExam()" style="margin-top:10px;background:linear-gradient(135deg,#1a73e8,#4285f4);">再来一套</button>';
-  h+='<button class="btn-restart" onclick="switchMode('browse')" style="margin-top:6px;background:#666;">返回刷题模式</button></div>';
+  h+='<button class="btn-restart" onclick="switchMode(\'browse\')" style="margin-top:6px;background:#666;">返回刷题模式</button></div>';
   document.getElementById('exam-doing').style.display='none';
   document.getElementById('exam-result').style.display='block';
   document.getElementById('exam-result').innerHTML=h;
-}function showRev(){document.getElementById('exam-doing').style.display='block';document.getElementById('exam-result').style.display='none';renderQ(0);}
+}
+function showRev(){document.getElementById('exam-doing').style.display='block';document.getElementById('exam-result').style.display='none';renderQ(0);}
 
 // ======================== 排行榜 ========================
 function saveScore(sc,correct,total,sc0,mc0,jc0,uname){
