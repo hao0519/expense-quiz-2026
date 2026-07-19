@@ -198,6 +198,10 @@ body {
 }
 .exam-header .info { font-size: 12px; color: #856404; }
 .exam-header .info strong { font-size: 14px; }
+.timer-warning { color: #dc3545 !important; }
+.timer-warning strong { color: #dc3545 !important; }
+@keyframes timerPulse { 0%{opacity:1} 50%{opacity:0.4} 100%{opacity:1} }
+.timer-pulse { animation: timerPulse 1s infinite; }
 .exam-progress {
   display: flex;
   gap: 4px;
@@ -351,6 +355,7 @@ body {
       <h2 style="font-size:18px;margin-bottom:6px;">模拟考试</h2>
       <p style="font-size:13px;color:#666;margin-bottom:4px;">随机抽45题：单选20 + 多选5 + 判断20</p>
       <p style="font-size:12px;color:#999;margin-bottom:20px;">做完自动计分，显示正确答案</p>
+      <p style="font-size:12px;color:#e67e22;margin-bottom:20px;font-weight:500;">⏱ 限时 15 分钟，超时自动交卷</p>
       <button class="btn-start" onclick="startExam()">开始考试</button>
       <button class="btn-leaderboard" onclick="showLeaderboard()">🏆 成绩排行榜</button>
     </div>
@@ -359,6 +364,7 @@ body {
     <div class="exam-header">
       <span class="info">已完成：<strong id="done-count">0</strong>/45</span>
       <span class="info">第 <strong id="current-index-show">1</strong>/45 题</span>
+      <span class="info" id="timer-display">⏱ <strong id="timer-countdown">15:00</strong></span>
     </div>
     <div class="exam-progress" id="exam-progress"></div>
     <div id="exam-question-area"></div>
@@ -488,11 +494,13 @@ function switchMode(m){
 }
 
 // ======================== 模拟考试 ========================
-var examQs=[],examAs=[],examCur=0;
+var examQs=[],examAs=[],examCur=0,examTimer=null,timeLeft=900;
 
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
 function startExam(){
+  if(examTimer){clearInterval(examTimer);examTimer=null;}
+  timeLeft=900;
   var ps=shuffle([].concat(SINGLES)).slice(0,20);
   var pm=shuffle([].concat(MULTIS)).slice(0,5);
   var pj=shuffle([].concat(JUDGES)).slice(0,20);
@@ -503,6 +511,34 @@ function startExam(){
   document.getElementById('exam-result').style.display='none';
   document.getElementById('exam-doing').style.display='block';
   renderQ(0);upProg();
+  updateTimerDisplay();
+  examTimer=setInterval(timerTick,1000);
+}
+function timerTick(){
+  timeLeft--;
+  updateTimerDisplay();
+  if(timeLeft<=0){clearInterval(examTimer);examTimer=null;timeLeft=0;forceSubmitExam();}
+}
+function updateTimerDisplay(){
+  var el=document.getElementById('timer-countdown');
+  if(!el)return;
+  var m=Math.floor(timeLeft/60),s=timeLeft%60;
+  el.textContent=m+':'+(s<10?'0':'')+s;
+  var td=document.getElementById('timer-display');
+  if(td){
+    if(timeLeft<=60){td.classList.add('timer-warning','timer-pulse');}
+    else if(timeLeft<=180){td.classList.add('timer-warning');td.classList.remove('timer-pulse');}
+    else{td.classList.remove('timer-warning','timer-pulse');}
+  }
+}
+function forceSubmitExam(){
+  // Mark all questions as submitted (even unanswered ones)
+  for(var i=0;i<examAs.length;i++){
+    if(!examAs[i].submitted){
+      examAs[i].submitted=true;
+    }
+  }
+  finishExam();
 }
 
 function renderQ(idx){
@@ -585,6 +621,7 @@ function upProg(){
 }
 
 function finishExam(){
+  if(examTimer){clearInterval(examTimer);examTimer=null;}
   var total=examQs.length,correct=0,score=0,totalScore=0;
   var sc0=0,mc0=0,jc0=0;
   for(var i=0;i<total;i++){
