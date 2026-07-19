@@ -494,7 +494,7 @@ function switchMode(m){
 }
 
 // ======================== 模拟考试 ========================
-var examQs=[],examAs=[],examCur=0,examTimer=null,timeLeft=900;
+var examQs=[],examAs=[],examCur=0,examTimer=null,timeLeft=900,API_BASE=((location.hostname==='127.0.0.1'||location.hostname==='localhost')?'':'https://'+location.hostname)+'/api';
 
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
@@ -659,51 +659,44 @@ function showRev(){document.getElementById('exam-doing').style.display='block';d
 // ======================== 排行榜 ========================
 function saveScore(sc,correct,total,sc0,mc0,jc0,uname){
   uname=uname||'匿名用户';
-  var lb=JSON.parse(localStorage.getItem('expenseQuizLB')||'[]');
-  var now=new Date();
-  var ts=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
-  lb.push({score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts,id:Date.now(),name:uname});
-  lb.sort(function(a,b){return b.score-a.score||b.correct-a.correct;});
-  if(lb.length>100)lb=lb.slice(0,100);
-  localStorage.setItem('expenseQuizLB',JSON.stringify(lb));
+  fetch(API_BASE+'/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:uname,score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0})}).catch(function(){});
 }
 function showLeaderboard(){
-  var lb=JSON.parse(localStorage.getItem('expenseQuizLB')||'[]');
-  if(lb.length===0){alert('暂无成绩记录，考完试自动排名！');return;}
-  var h='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2>';
-  h+='<table class="lb-table"><tr><th>#</th><th>姓名</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
-  for(var i=0;i<lb.length;i++){
-    var r=lb[i];
-    var medal='';
-    if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
-    var pct=Math.round(r.correct/r.total*100);
-    h+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+(r.name||'匿名')+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
-  }
-  h+='</table>';
-  h+='<br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button>';
-  h+='<button class="btn-clear-lb" onclick="clearLeaderboard()">清除记录</button></div>';
+  loadLeaderboard();
+}
+function loadLeaderboard(){
+  var h='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:13px;color:#999;">加载中...</p></div>';
   document.getElementById('exam-start').style.display='none';
   document.getElementById('exam-result').style.display='block';
   document.getElementById('exam-result').innerHTML=h;
+  fetch(API_BASE+'/score').then(function(r){return r.json();}).then(function(lb){
+    if(!lb||lb.length===0){
+      document.getElementById('exam-result').innerHTML='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:14px;color:#999;">暂无成绩记录，考完试自动排名！</p><br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button></div>';
+      return;
+    }
+    var h2='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2>';
+    h2+='<table class="lb-table"><tr><th>#</th><th>姓名</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
+    for(var i=0;i<lb.length;i++){
+      var r=lb[i];
+      var medal='';
+      if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
+      h2+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+(r.name||'匿名')+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
+    }
+    h2+='</table>';
+    h2+='<br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button>';
+    h2+='<button class="btn-clear-lb" onclick="clearLeaderboard()">清除记录</button></div>';
+    document.getElementById('exam-result').innerHTML=h2;
+  }).catch(function(){
+    document.getElementById('exam-result').innerHTML='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:14px;color:#999;">无法加载排行榜（服务器未配置）</p><br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button></div>';
+  });
 }
 function clearLeaderboard(){
-  var adminPwd=localStorage.getItem('expenseQuizAdminPwd');
-  if(!adminPwd){
-    var setPwd=prompt('请设置管理员密码，用于保护排行榜数据：');
-    if(!setPwd||setPwd.length<3){alert('密码至少3位，取消操作');return;}
-    var confirmPwd=prompt('请再次输入密码确认：');
-    if(setPwd!==confirmPwd){alert('两次密码不一致，取消操作');return;}
-    localStorage.setItem('expenseQuizAdminPwd',setPwd);
-    alert('✅ 管理员密码设置成功！');
-    return;
-  }
-  var inputPwd=prompt('请输入管理员密码以清除全部成绩记录：');
-  if(!inputPwd){return;}
-  if(inputPwd!==adminPwd){alert('❌ 密码错误，无法清除记录');return;}
-  if(confirm('确定清除全部成绩记录？此操作不可恢复！')){
-    localStorage.removeItem('expenseQuizLB');
-    showLeaderboard();
-  }
+  var pwd=prompt('请输入管理员密码以清除全部成绩记录：');
+  if(!pwd){return;}
+  fetch(API_BASE+'/score',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})}).then(function(r){return r.json();}).then(function(d){
+    if(d.ok){alert('✅ 已清除 '+d.deleted+' 条记录');loadLeaderboard();}
+    else{alert('❌ '+d.error);}
+  }).catch(function(){alert('❌ 清除失败');});
 }
 
 buildBrowse();

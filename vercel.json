@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/score.js": {
+      "memory": 128,
+      "maxDuration": 10
+    }
+  },
+  "github": {
+    "silent": true
+  }
+}
