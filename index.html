@@ -355,7 +355,11 @@ body {
       <h2 style="font-size:18px;margin-bottom:6px;">模拟考试</h2>
       <p style="font-size:13px;color:#666;margin-bottom:4px;">随机抽45题：单选20 + 多选5 + 判断20</p>
       <p style="font-size:12px;color:#999;margin-bottom:20px;">做完自动计分，显示正确答案</p>
-      <p style="font-size:12px;color:#e67e22;margin-bottom:20px;font-weight:500;">⏱ 限时 15 分钟，超时自动交卷</p>
+      <p style="font-size:12px;color:#e67e22;margin-bottom:12px;font-weight:500;">⏱ 限时 15 分钟，超时自动交卷</p>
+      <div style="max-width:260px;margin:0 auto 16px;">
+        <input id="exam-name" type="text" placeholder="请输入姓名" style="width:100%;padding:8px 12px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#ddd'">
+        <input id="exam-empid" type="text" placeholder="请输入工号" style="width:100%;padding:8px 12px;margin-bottom:8px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#ddd'">
+      </div>
       <button class="btn-start" onclick="startExam()">开始考试</button>
       <button class="btn-leaderboard" onclick="showLeaderboard()">🏆 成绩排行榜</button>
     </div>
@@ -501,6 +505,11 @@ var SUPABASE_KEY='sb_publishable_JRjCz_Lh4SHFfH5oUP9idA_PWt1_yR5';
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
 function startExam(){
+  var name=document.getElementById('exam-name').value.trim();
+  var empid=document.getElementById('exam-empid').value.trim();
+  if(!name||!empid){alert('请填写姓名和工号后再开始考试');return;}
+  localStorage.setItem('expenseQuizName',name);
+  localStorage.setItem('expenseQuizEmpId',empid);
   if(examTimer){clearInterval(examTimer);examTimer=null;}
   timeLeft=900;
   var ps=shuffle([].concat(SINGLES)).slice(0,20);
@@ -657,19 +666,12 @@ function finishExam(){
 }
 function showRev(){document.getElementById('exam-doing').style.display='block';document.getElementById('exam-result').style.display='none';renderQ(0);}
 
-// ======================== 昵称管理 ========================
+// ======================== 姓名工号管理 ========================
 function getMyName(){
   return localStorage.getItem('expenseQuizName')||'匿名用户';
 }
-function setMyName(){
-  var cur=getMyName();
-  var n=prompt('请输入你的昵称（排行榜显示用）：',cur==='匿名用户'?'':cur);
-  if(n===null)return;
-  n=n.trim()||'匿名用户';
-  localStorage.setItem('expenseQuizName',n);
-  alert('✅ 昵称已修改为：'+n);
-  var el=document.getElementById('exam-result');
-  if(el&&el.style.display!=='none')loadLeaderboard();
+function getMyEmpId(){
+  return localStorage.getItem('expenseQuizEmpId')||'';
 }
 
 // ======================== 排行榜 ========================
@@ -678,7 +680,7 @@ function saveScore(sc,correct,total,sc0,mc0,jc0,uname){
   var now=new Date();
   var ts=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
   fetch(SUPABASE_URL+'/rest/v1/scores',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-    body:JSON.stringify({name:uname,score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts})}).catch(function(){});
+    body:JSON.stringify({name:uname,empid:getMyEmpId(),score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts})}).catch(function(){});
 }
 function showLeaderboard(){
   loadLeaderboard();
@@ -695,13 +697,13 @@ function loadLeaderboard(){
     }
     var h2='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:11px;color:#999;">来自所有人的考试记录</p>';
     var myName=getMyName();
-    h2+='<div style="margin:10px 0;padding:8px 12px;background:#f0f7ff;border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;"><span>我的昵称: <strong>'+esc(myName)+'</strong></span><button onclick="setMyName()" style="padding:4px 12px;border:none;border-radius:14px;background:#1a73e8;color:#fff;font-size:12px;cursor:pointer;">✏️ 修改</button></div>';
-    h2+='<table class="lb-table"><tr><th>#</th><th>姓名</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
+    h2+='<div style="margin:10px 0;padding:8px 12px;background:#f0f7ff;border-radius:8px;font-size:13px;"><span>我的姓名: <strong>'+esc(myName)+'</strong>  ·  工号: <strong>'+(getMyEmpId()||'-')+'</strong></span></div>';
+    h2+='<table class="lb-table"><tr><th>#</th><th>姓名</th><th>工号</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
     for(var i=0;i<lb.length;i++){
       var r=lb[i];
       var medal='';
       if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
-      h2+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+(r.name||'匿名')+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
+      h2+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+(r.name||'匿名')+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#555;">'+(r.empid||'-')+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
     }
     h2+='</table>';
     h2+='<br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button>';
