@@ -677,11 +677,18 @@ function getMyEmpId(){
 // ======================== 排行榜 ========================
 function saveScore(sc,correct,total,sc0,mc0,jc0,uname){
   uname=uname||'匿名用户';
+  var empid=getMyEmpId();
   var now=new Date();
   var ts=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+' '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  // 姓名和工号用分隔符存入name字段（Supabase表无empid列）
+  var storeName=uname+'||'+empid;
   fetch(SUPABASE_URL+'/rest/v1/scores',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-    body:JSON.stringify({name:uname,empid:getMyEmpId(),score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts})}).catch(function(){});
+    body:JSON.stringify({name:storeName,score:sc,correct:correct,total:total,sc:sc0,mc:mc0,jc:jc0,time:ts})}).catch(function(){});
 }
+function parseNameEmp(storeName){
+  if(!storeName||storeName==='匿名用户')return {name:'匿名',empid:'-'};
+  var parts=storeName.split('||');
+  return {name:parts[0]||'匿名',empid:parts[1]||'-'};}
 function showLeaderboard(){
   loadLeaderboard();
 }
@@ -703,7 +710,8 @@ function loadLeaderboard(){
       var r=lb[i];
       var medal='';
       if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
-      h2+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+(r.name||'匿名')+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#555;">'+(r.empid||'-')+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
+      var ne=parseNameEmp(r.name);
+      h2+='<tr><td>'+medal+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+esc(ne.name)+'</td><td style="text-align:left;max-width:60px;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#555;">'+esc(ne.empid)+'</td><td class="lb-score">'+r.score+'</td><td>'+r.correct+'/'+r.total+'</td><td>单选'+(r.sc||'-')+'多选'+(r.mc||'-')+'判断'+(r.jc||'-')+'</td><td class="lb-time">'+r.time+'</td></tr>';
     }
     h2+='</table>';
     h2+='<br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button>';
