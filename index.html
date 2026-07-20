@@ -704,12 +704,21 @@ function loadLeaderboard(){
       document.getElementById('exam-result').innerHTML='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:14px;color:#999;">暂无成绩记录，考完试自动排名！</p><br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button></div>';
       return;
     }
+    // 过滤：只显示有有效姓名和工号的记录
+    var valid=lb.filter(function(r){
+      var ne=parseNameEmp(r.name);
+      return ne.name!=='已清除'&&ne.name!=='匿名'&&ne.name!=='匿名用户'&&ne.empid&&ne.empid!=='-';
+    });
+    if(valid.length===0){
+      document.getElementById('exam-result').innerHTML='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:14px;color:#999;">暂无有效成绩记录</p><br><button class="btn-start" onclick="document.getElementById(\'exam-start\').style.display=\'block\';document.getElementById(\'exam-result\').style.display=\'none\'">返回</button></div>';
+      return;
+    }
     var h2='<div class="score-card"><h2 style="font-size:20px;margin-bottom:10px;">🏆 成绩排行榜</h2><p style="font-size:11px;color:#999;">来自所有人的考试记录</p>';
     var myName=getMyName();
     h2+='<div style="margin:10px 0;padding:8px 12px;background:#f0f7ff;border-radius:8px;font-size:13px;"><span>我的姓名: <strong>'+esc(myName)+'</strong>  ·  工号: <strong>'+(getMyEmpId()||'-')+'</strong></span></div>';
     h2+='<table class="lb-table"><tr><th>#</th><th>姓名</th><th>工号</th><th>得分</th><th>正确率</th><th>详细</th><th>时间</th></tr>';
-    for(var i=0;i<lb.length;i++){
-      var r=lb[i];
+    for(var i=0;i<valid.length;i++){
+      var r=valid[i];
       var medal='';
       if(i===0)medal='🥇';else if(i===1)medal='🥈';else if(i===2)medal='🥉';else medal=(i+1);
       var ne=parseNameEmp(r.name);
